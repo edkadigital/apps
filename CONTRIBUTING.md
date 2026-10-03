@@ -88,12 +88,12 @@ These checks run on the pull request:
 
 | Check | What it does |
 |---|---|
+| Edka validation | Runs the validator with the community rules, and reports what the package runs and creates. |
 | Chart | Lints the chart, renders it, validates the result against the Kubernetes schemas and applies the community rules to it. Confirms that each pinned tag still points at its digest and that the image is published for the listed platforms. Confirms that a changed package has a higher version, and that a new package comes from one of its maintainers. |
 | Install | Installs the chart on a fresh cluster, in a namespace that enforces the baseline Pod Security Standard, and waits for it to become ready. |
 
-A maintainer runs `edka apps validate --community` on the package again, reads
-it and merges it. A merged version appears in the catalog with a following
-Edka release.
+A maintainer reads the package and merges it. A merged version appears in the
+catalog with a following Edka release.
 
 ## Change a package
 
