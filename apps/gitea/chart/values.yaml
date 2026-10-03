@@ -1,0 +1,76 @@
+image:
+  # Official Gitea rootless image.
+  repository: docker.gitea.com/gitea
+  # Defaults to "<appVersion>-rootless" from Chart.yaml.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# Override the generated resource name prefix.
+fullnameOverride: ""
+
+# Labels added to every object the chart creates.
+commonLabels: {}
+
+# Labels added to the Gitea pod.
+podLabels: {}
+
+# Annotations added to the Gitea pod. A changed value restarts the pod, which
+# is how a new value in existingSecret reaches Gitea.
+podAnnotations: {}
+
+# Name of a Secret that exists in the release namespace. Required. Its keys:
+#   ADMIN_PASSWORD                    password of the administrator account
+#   GITEA__security__SECRET_KEY       encrypts cookies and stored settings
+#   GITEA__security__INTERNAL_TOKEN   authenticates Gitea's internal API
+#   GITEA__database__PASSWD           database password, when not SQLite
+# Every key is passed to Gitea as an environment variable.
+existingSecret: ""
+
+# Gitea configuration that is not secret. Keys are environment variables the
+# image applies to app.ini on every start: GITEA__<section>__<KEY>=value.
+# APP_NAME sets the site title.
+config: {}
+#  APP_NAME: "Gitea"
+#  GITEA__database__DB_TYPE: "postgres"
+#  GITEA__database__HOST: "postgres-rw.postgres.svc.cluster.local:5432"
+#  GITEA__database__NAME: "gitea"
+#  GITEA__database__USER: "gitea"
+
+admin:
+  # Administrator account, created by an init step on every pod start.
+  username: "gitea_admin"
+  email: "gitea@local.domain"
+  # keepUpdated: set the password to ADMIN_PASSWORD on every pod start.
+  # initialOnly: create the account once and leave it alone afterwards.
+  passwordMode: keepUpdated
+
+service:
+  http:
+    port: 3000
+  ssh:
+    # Serve Git over SSH from Gitea's built-in SSH server, which listens on
+    # 2222 in the rootless image.
+    enabled: false
+    port: 22
+
+persistence:
+  enabled: true
+  # Volume mounted at /var/lib/gitea: repositories, LFS, attachments, indexes,
+  # and the SQLite database when one is used.
+  size: 10Gi
+  # An empty value uses the default StorageClass of the cluster.
+  storageClassName: ""
+  # Use a PersistentVolumeClaim that exists instead of creating one.
+  existingClaim: ""
+
+resources: {}
+#  requests:
+#    cpu: 250m
+#    memory: 512Mi
+#  limits:
+#    cpu: "1"
+#    memory: 1Gi
+
+nodeSelector: {}
+
+tolerations: []

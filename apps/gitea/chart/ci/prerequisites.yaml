@@ -1,0 +1,10 @@
+# Applied before the smoke test installs the chart. Test values only.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gitea-smoke
+type: Opaque
+stringData:
+  ADMIN_PASSWORD: "smoke-test-password"
+  GITEA__security__SECRET_KEY: "smoke-test-secret-key-0123456789abcdef"
+  GITEA__security__INTERNAL_TOKEN: "smoke-test-internal-token-0123456789abcdef"

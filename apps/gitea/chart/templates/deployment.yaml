@@ -1,0 +1,166 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "gitea.fullname" . }}
+  labels:
+    {{- include "gitea.labels" . | nindent 4 }}
+spec:
+  # Single replica by design: repository data lives on one ReadWriteOnce
+  # volume. Recreate avoids two pods contending for it during upgrades.
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      {{- include "gitea.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "gitea.selectorLabels" . | nindent 8 }}
+        {{- with .Values.podLabels }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      annotations:
+        checksum/config: {{ include "gitea.configChecksum" . }}
+        {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsNonRoot: true
+      initContainers:
+        # Runs migrations and creates (or re-syncs) the administrator
+        # account before Gitea starts. The image entrypoint applies
+        # environment-to-ini, then executes the script, so the Gitea CLI
+        # sees the same app.ini as the main container.
+        - name: configure-gitea
+          image: {{ include "gitea.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["/usr/local/bin/docker-entrypoint.sh"]
+          args:
+            - /bin/sh
+            - -c
+            - |
+              set -eu
+              gitea migrate
+              if gitea admin user list --admin | grep -E "\s+${GITEA_ADMIN_USERNAME}\s+" >/dev/null; then
+                echo "admin user ${GITEA_ADMIN_USERNAME} exists"
+                {{- if eq .Values.admin.passwordMode "keepUpdated" }}
+                gitea admin user change-password --username "${GITEA_ADMIN_USERNAME}" --password "${GITEA_ADMIN_PASSWORD}" --must-change-password=false
+                echo "admin password synced"
+                {{- end }}
+              else
+                gitea admin user create --admin --username "${GITEA_ADMIN_USERNAME}" --password "${GITEA_ADMIN_PASSWORD}" --email "${GITEA_ADMIN_EMAIL}" --must-change-password=false
+                echo "admin user ${GITEA_ADMIN_USERNAME} created"
+              fi
+          env:
+            {{- include "gitea.configEnv" . | nindent 12 }}
+            - name: GITEA_ADMIN_USERNAME
+              value: {{ .Values.admin.username | quote }}
+            - name: GITEA_ADMIN_EMAIL
+              value: {{ .Values.admin.email | quote }}
+            - name: GITEA_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ required "existingSecret is required" .Values.existingSecret }}
+                  key: ADMIN_PASSWORD
+          envFrom:
+            - secretRef:
+                name: {{ .Values.existingSecret }}
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/gitea
+            - name: config
+              mountPath: /etc/gitea
+            - name: tmp
+              mountPath: /tmp
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      containers:
+        - name: gitea
+          image: {{ include "gitea.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          env:
+            {{- include "gitea.configEnv" . | nindent 12 }}
+          envFrom:
+            - secretRef:
+                name: {{ .Values.existingSecret }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+            {{- if .Values.service.ssh.enabled }}
+            - name: ssh
+              containerPort: 2222
+              protocol: TCP
+            {{- end }}
+          livenessProbe:
+            httpGet:
+              path: /api/healthz
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /api/healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+            seccompProfile:
+              type: RuntimeDefault
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/gitea
+            - name: config
+              mountPath: /etc/gitea
+            - name: tmp
+              mountPath: /tmp
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      volumes:
+        - name: data
+          {{- if .Values.persistence.enabled }}
+          persistentVolumeClaim:
+            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "gitea.fullname" .)) }}
+          {{- else }}
+          emptyDir: {}
+          {{- end }}
+        # app.ini is regenerated from environment variables on every start;
+        # it never needs to survive a restart.
+        - name: config
+          emptyDir: {}
+        - name: tmp
+          emptyDir: {}

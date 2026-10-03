@@ -1,0 +1,32 @@
+name: Problem with a package
+description: A package that does not install, run or update as its README says.
+body:
+  - type: input
+    id: package
+    attributes:
+      label: Package
+      description: The directory of the package under `apps/`.
+      placeholder: gitea
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: The `version` of the package in `template.yaml`.
+      placeholder: 0.2.0
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened
+      description: What you did, what you expected and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnosis
+    attributes:
+      label: Output of edka apps diagnose
+      description: Run `edka apps diagnose <app>` and paste the output. Remove anything private first.
+      render: text

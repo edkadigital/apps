@@ -1,0 +1,5 @@
+# Values the checks in this repository lint, render and install with.
+# SQLite keeps the install self-contained. An install through Edka uses PostgreSQL.
+existingSecret: gitea-smoke
+config:
+  GITEA__database__DB_TYPE: "sqlite3"

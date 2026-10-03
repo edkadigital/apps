@@ -1,0 +1,13 @@
+# Keeps the actions the workflows pin by commit current. A new release waits a
+# week before Dependabot proposes it.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    groups:
+      actions:
+        patterns: ["*"]

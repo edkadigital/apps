@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Report a vulnerability
+    url: https://github.com/edkadigital/apps/security/advisories/new
+    about: Reports a vulnerability in a package privately. For one in Edka itself, email security@edka.io.
+  - name: Edka documentation
+    url: https://edka.io/docs/apps/overview/
+    about: Installing and running apps on an Edka cluster.

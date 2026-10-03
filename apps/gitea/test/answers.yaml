@@ -1,0 +1,7 @@
+postgres_instance: "postgres"
+postgres_database: "gitea"
+postgres_user: "gitea"
+postgres_host: "postgres-rw.postgres.svc.cluster.local"
+access_enabled: true
+ingress_class: "eg"
+hostname: "git.example.com"

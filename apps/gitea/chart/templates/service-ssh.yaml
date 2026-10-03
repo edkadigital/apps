@@ -1,0 +1,17 @@
+{{- if .Values.service.ssh.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "gitea.fullname" . }}-ssh
+  labels:
+    {{- include "gitea.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  ports:
+    - name: ssh
+      port: {{ .Values.service.ssh.port }}
+      targetPort: ssh
+      protocol: TCP
+  selector:
+    {{- include "gitea.selectorLabels" . | nindent 4 }}
+{{- end }}

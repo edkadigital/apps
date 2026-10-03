@@ -1,0 +1,13 @@
+apiVersion: v2
+name: gitea
+description: Gitea Git server on the official rootless image. The chart ships no database, cache or ingress. It reads its secrets from a Secret that exists.
+type: application
+version: 0.2.0
+appVersion: "1.26.4"
+home: https://gitea.com
+sources:
+  - https://github.com/go-gitea/gitea
+  - https://github.com/edkadigital/apps
+maintainers:
+  - name: Edka
+    url: https://edka.io
