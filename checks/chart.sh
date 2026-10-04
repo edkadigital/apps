@@ -17,15 +17,15 @@ slug="$(yq -r '.slug // ""' "$app/template.yaml")"
 [ "$slug" = "$directory" ] || die "the slug \"$slug\" does not match the directory apps/$directory"
 
 helm_values "$app"
+chart="$(packed_chart "$app")"
+rendered="$(mktemp)"
+trap 'rm -rf "$chart" "$rendered"' EXIT
 
 echo "== helm lint"
-helm lint --strict "$app/chart" "${HELM_VALUES[@]}"
-
-rendered="$(mktemp)"
-trap 'rm -f "$rendered"' EXIT
+helm lint --strict "$chart" "${HELM_VALUES[@]}"
 
 echo "== helm template"
-helm template "$slug" "$app/chart" --namespace "smoke-$slug" "${HELM_VALUES[@]}" > "$rendered"
+helm template "$slug" "$chart" --namespace "smoke-$slug" "${HELM_VALUES[@]}" > "$rendered"
 
 echo "== Kubernetes schemas"
 # 1.32 is the oldest Kubernetes version an Edka cluster runs.

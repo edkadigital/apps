@@ -33,6 +33,7 @@ kube() {
 
 finish() {
   local status=$?
+  rm -rf "${chart:-}"
   if [ "$status" -ne 0 ]; then
     echo "== the install of $slug failed. What the cluster reports:"
     kube get all --namespace "$namespace" || true
@@ -60,7 +61,8 @@ if [ -f "$app/chart/ci/prerequisites.yaml" ]; then
 fi
 
 echo "== helm install"
-helm install "$slug" "$app/chart" --kube-context "$context" --namespace "$namespace" \
+chart="$(packed_chart "$app")"
+helm install "$slug" "$chart" --kube-context "$context" --namespace "$namespace" \
   "${HELM_VALUES[@]}" --wait --timeout 5m
 
 kube get pods --namespace "$namespace"
