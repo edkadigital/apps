@@ -5,3 +5,4 @@
 # One line per package: its maintainers, and Edka. Edka maintainers add the
 # line when they merge a new package.
 /apps/gitea/   @camilb
+/apps/memos/   @camilb
