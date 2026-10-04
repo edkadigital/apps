@@ -1,0 +1,38 @@
+image:
+  repository: ghcr.io/usememos/memos
+  # Defaults to appVersion from Chart.yaml.
+  tag: ""
+  pullPolicy: IfNotPresent
+
+# Prefix of the object names. Empty uses the release name.
+fullnameOverride: ""
+
+containerPort: 5230
+
+# Canonical external URL of the instance, such as https://notes.example.com.
+# Memos builds its links with it. Empty leaves it unset.
+instanceUrl: ""
+
+# Name of a Secret in the release namespace. Optional. Every key becomes an
+# environment variable, such as MEMOS_DRIVER and MEMOS_DSN for a database
+# other than SQLite.
+existingSecret: ""
+
+persistence:
+  size: 10Gi
+  # An empty value uses the default StorageClass of the cluster.
+  storageClass: ""
+  # The SQLite database and the files Memos stores locally live here.
+  mountPath: /var/opt/memos
+
+# Labels added to the pod.
+podLabels: {}
+
+# Annotations added to the pod. A changed value restarts the pod.
+podAnnotations: {}
+
+resources: {}
+
+nodeSelector: {}
+
+tolerations: []

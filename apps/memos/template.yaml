@@ -1,0 +1,325 @@
+format_version: 2
+name: "Memos"
+slug: "memos"
+description: "Self-hosted note-taking with Markdown notes, tags and a timeline. Data stays in SQLite on one volume."
+version: "0.1.0"
+app_version: "0.31.0"
+category: "productivity"
+subcategory: "notes"
+tags: ["notes", "markdown", "memos", "knowledge-base"]
+icon: "notebook-pen"
+links:
+  - label: "Documentation"
+    url: "https://usememos.com/docs"
+  - label: "GitHub"
+    url: "https://github.com/usememos/memos"
+upstream:
+  repository: "https://github.com/usememos/memos"
+  license: "MIT"
+maintainers:
+  - github: "camilb"
+images:
+  - "ghcr.io/usememos/memos"
+platforms: ["linux/amd64", "linux/arm64"]
+required_addons: []
+
+auto_update:
+  targets:
+    - type: "image-tag"
+      field: "image_tag"
+      repository: "ghcr.io/usememos/memos"
+      helm_value_path: "image.tag"
+
+configuration_tabs:
+  - "general"
+  - "storage"
+  - "resources"
+  - "placement"
+  - "access"
+
+endpoints:
+  - name: "Memos"
+    type: "service"
+    icon: "server"
+    value_template: "http://{{{ release_name }}}.{{{ namespace }}}.svc.cluster.local:5230"
+    description: "Address inside the cluster"
+  - name: "External URL"
+    type: "url"
+    icon: "globe"
+    value_template: "https://{{{ hostname }}}"
+    description: "Address on the gateway"
+    show_if: "access_enabled"
+
+runtime_selectors:
+  labels:
+    edka.io/app-id: "{{{ app_id }}}"
+  namespaces:
+    - "{{{ namespace }}}"
+  workloads:
+    - "{{{ release_name }}}"
+  services:
+    - "{{{ release_name }}}"
+  persistent_volume_claims:
+    - "{{{ release_name }}}"
+
+inputs_schema:
+  general:
+    - name: "namespace"
+      config:
+        type: "dynamic-select"
+        label: "Namespace"
+        description: "Namespace the app is installed into"
+        default: "memos"
+        data_source: "cluster-namespaces"
+        required: true
+        editable: false
+        validation: "kubernetes-name"
+    - name: "image_tag"
+      config:
+        type: "string"
+        label: "Image tag"
+        description: "Tag of ghcr.io/usememos/memos"
+        default: "0.31.0@sha256:24c2707ddd8fbd2ceaa7a61ecab86a53cdcde640b24ce572b73da14b00b5785f"
+        required: true
+        editable: true
+    - name: "auto_update_enabled"
+      config:
+        type: "boolean"
+        label: "Auto-update"
+        description: "Apply newer image tags that match the policy."
+        default: false
+        required: false
+        editable: true
+    - name: "auto_update_policy"
+      config:
+        type: "select"
+        label: "Auto-update policy"
+        description: "Version range allowed for automatic image updates."
+        default: "patch"
+        required: true
+        editable: true
+        show_if: "auto_update_enabled"
+        options:
+          - label: "Patch"
+            value: "patch"
+          - label: "Minor"
+            value: "minor"
+          - label: "Major"
+            value: "major"
+          - label: "All"
+            value: "all"
+          - label: "Custom"
+            value: "custom"
+    - name: "auto_update_custom_pattern"
+      config:
+        type: "string"
+        label: "Custom tag pattern"
+        description: "Custom tag filter. Use glob: or regexp: prefixes."
+        default: ""
+        required: false
+        editable: true
+        show_if: "auto_update_enabled && auto_update_policy === 'custom'"
+    - name: "auto_update_frequency"
+      config:
+        type: "select"
+        label: "Auto-update check"
+        description: "Minimum time between update checks for this app."
+        default: "1h"
+        required: true
+        editable: true
+        show_if: "auto_update_enabled"
+        options:
+          - label: "Every 5 minutes"
+            value: "5m"
+          - label: "Every 30 minutes"
+            value: "30m"
+          - label: "Every hour"
+            value: "1h"
+          - label: "Every 6 hours"
+            value: "6h"
+          - label: "Daily"
+            value: "24h"
+  storage:
+    - name: "storage_class"
+      config:
+        type: "dynamic-select"
+        label: "Storage class"
+        description: "Storage class of the data volume. Empty uses the default of the cluster."
+        data_source: "cluster-storage-classes"
+        required: false
+        editable: false
+    - name: "storage_size"
+      config:
+        type: "string"
+        label: "Storage size"
+        description: "Size of the data volume"
+        default: "10Gi"
+        required: true
+        editable: true
+  resources:
+    - name: "cpu_request"
+      config:
+        type: "string"
+        label: "CPU request"
+        description: "CPU reserved for the pod"
+        default: "50m"
+        required: true
+    - name: "memory_request"
+      config:
+        type: "string"
+        label: "Memory request"
+        description: "Memory reserved for the pod"
+        default: "128Mi"
+        required: true
+    - name: "cpu_limit"
+      config:
+        type: "string"
+        label: "CPU limit"
+        description: "Most CPU the pod can use"
+        default: "500m"
+        required: true
+    - name: "memory_limit"
+      config:
+        type: "string"
+        label: "Memory limit"
+        description: "Most memory the pod can use"
+        default: "512Mi"
+        required: true
+  placement:
+    - name: "node_pool_name"
+      config:
+        type: "dynamic-select"
+        label: "Node pool"
+        description: "Run the pods on one node pool"
+        data_source: "cluster-node-pools"
+        required: false
+        editable: true
+    - name: "tolerate_node_pool_taints"
+      config:
+        type: "boolean"
+        label: "Tolerate node pool taints"
+        description: "Add tolerations for the taints of the selected node pool"
+        default: true
+        required: false
+  access:
+    - name: "access_enabled"
+      config:
+        type: "boolean"
+        label: "Expose through the gateway"
+        description: "Publish the app on a hostname through a Gateway traffic class."
+        default: false
+        required: false
+    - name: "ingress_class"
+      config:
+        type: "dynamic-select"
+        label: "Traffic class"
+        description: "Gateway traffic class of this cluster"
+        default: ""
+        data_source: "cluster-ingress-classes"
+        required: true
+        show_if: "access_enabled"
+    - name: "hostname"
+      config:
+        type: "string"
+        label: "Hostname"
+        description: "Hostname the app is reached on"
+        default: ""
+        required: true
+        editable: true
+        validation: "domain"
+        show_if: "access_enabled"
+        placeholder: "app.example.com"
+    - name: "use_cluster_issuer"
+      config:
+        type: "boolean"
+        label: "Request a certificate"
+        description: "Request a Let's Encrypt certificate for the hostname when no wildcard certificate of the cluster covers it."
+        default: true
+        required: false
+        show_if: "access_enabled"
+
+template: |
+  apiVersion: v1
+  kind: Namespace
+  metadata:
+    name: {{{ namespace }}}
+  ---
+  apiVersion: helm.cattle.io/v1
+  kind: HelmChart
+  metadata:
+    namespace: {{{ namespace }}}
+    name: {{{ release_name }}}
+    annotations:
+      edka.io/auto-update-enabled: "{{{ auto_update_enabled }}}"
+      edka.io/auto-update-policy: "{{{ auto_update_policy }}}"
+      edka.io/auto-update-frequency: "{{{ auto_update_frequency }}}"
+      edka.io/auto-update-custom-pattern: "{{{ auto_update_custom_pattern }}}"
+      edka.io/auto-update-targets: |-
+        {{{ auto_update_targets }}}
+  spec:
+    chart: ./chart
+    targetNamespace: {{{ namespace }}}
+    valuesContent: |-
+      fullnameOverride: "{{{ release_name }}}"
+      image:
+        repository: "ghcr.io/usememos/memos"
+        tag: "{{{ image_tag }}}"
+      containerPort: 5230
+      {{#access_enabled}}
+      instanceUrl: "https://{{{ hostname }}}"
+      {{/access_enabled}}
+      persistence:
+        size: "{{{ storage_size }}}"
+        {{#storage_class}}
+        storageClass: "{{{ storage_class }}}"
+        {{/storage_class}}
+      podLabels:
+        edka.io/app-id: "{{{ app_instance_id_label }}}"
+        edka.io/catalog-app-id: "{{{ catalog_app_id_label }}}"
+      resources:
+        requests:
+          cpu: "{{{ cpu_request }}}"
+          memory: "{{{ memory_request }}}"
+        limits:
+          cpu: "{{{ cpu_limit }}}"
+          memory: "{{{ memory_limit }}}"
+      {{#node_pool_selector_enabled}}
+      nodeSelector:
+        {{{ node_pool_selector_key }}}: "{{{ node_pool_selector_value }}}"
+      {{/node_pool_selector_enabled}}
+      {{#node_pool_tolerations_enabled}}
+      tolerations:
+      {{#node_pool_tolerations}}
+        - key: "{{{ key }}}"
+          operator: Equal
+          value: "{{{ value }}}"
+          effect: "{{{ effect }}}"
+      {{/node_pool_tolerations}}
+      {{/node_pool_tolerations_enabled}}
+      {{^node_pool_tolerations_enabled}}
+      tolerations: []
+      {{/node_pool_tolerations_enabled}}
+  {{#access_enabled}}
+  {{#ingress_class_is_gateway}}
+  ---
+  apiVersion: gateway.networking.k8s.io/v1
+  kind: HTTPRoute
+  metadata:
+    namespace: {{{ namespace }}}
+    name: {{{ release_name }}}-web
+  spec:
+    parentRefs:
+      - name: {{{ gateway_name }}}
+        namespace: {{{ gateway_namespace }}}
+    hostnames:
+      - "{{{ hostname }}}"
+    rules:
+      - matches:
+          - path:
+              type: PathPrefix
+              value: /
+        backendRefs:
+          - name: {{{ release_name }}}
+            port: 5230
+  {{/ingress_class_is_gateway}}
+  {{/access_enabled}}
