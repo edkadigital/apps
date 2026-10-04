@@ -2,7 +2,10 @@
 
 Edka acts on some field names. A package that uses these names gets the
 behaviour described here, in every organization and on every cluster.
-`edka apps init` writes these blocks, so most packages start with them in place.
+A package with `standard` gets the namespace, image update, resources and
+placement fields, and the storage, access and PostgreSQL fields it asks for,
+without writing them. See [Standard parts](package-format.md#standard-parts).
+The blocks below are for a package that writes the full template.
 
 ## Namespace
 

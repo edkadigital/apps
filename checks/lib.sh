@@ -23,17 +23,23 @@ app_dir() {
 }
 
 # The image tags the form pins, one "value.path=tag" per line. They come from
-# the auto_update targets of template.yaml and the default of the field each
-# target names, so the checks run the images an install through Edka runs.
+# standard.tag and from the auto_update targets of template.yaml with the
+# default of the field each target names, so the checks run the images an
+# install through Edka runs.
 pinned_tags() {
   yq -r '
     . as $package
-    | ($package.auto_update.targets // [])[]
-    | select(.type == "image-tag" and .helm_value_path != null)
-    | . as $target
-    | ([$package.inputs_schema[][] | select(.name == $target.field) | .config.default] | .[0]) as $tag
-    | select($tag != null and $tag != "")
-    | $target.helm_value_path + "=" + $tag
+    | (
+        ([$package.standard.tag] | map(select(. != null) | "image.tag=" + .))
+        + [
+          ($package.auto_update.targets // [])[]
+          | select(.type == "image-tag" and .helm_value_path != null)
+          | . as $target
+          | ([($package.inputs_schema // {})[][] | select(.name == $target.field) | .config.default] | .[0]) as $tag
+          | select($tag != null and $tag != "")
+          | $target.helm_value_path + "=" + $tag
+        ]
+      )[]
   ' "$1/template.yaml"
 }
 

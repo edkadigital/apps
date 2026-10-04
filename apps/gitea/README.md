@@ -28,8 +28,8 @@ In the namespace of the instance:
 
 - A Deployment with one replica of `docker.gitea.com/gitea`, running as user
   1000 with a read-only root filesystem.
-- A PersistentVolumeClaim `<instance>-data`, mounted at `/var/lib/gitea`.
-- A Service `<instance>-http` on port 3000, and `<instance>-ssh` on port 22
+- A PersistentVolumeClaim `<instance>`, mounted at `/var/lib/gitea`.
+- A Service `<instance>` on port 3000, and `<instance>-ssh` on port 22
   when Git over SSH is on.
 - A Secret `<instance>-config` with the administrator password, Gitea's
   `SECRET_KEY` and `INTERNAL_TOKEN`, and the database password.

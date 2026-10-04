@@ -58,21 +58,80 @@ allowed anywhere in a package.
 | `links` | `{label, url}[]` | no | Up to 10. `https` only. |
 | `upstream` | `{repository, license}` | community | Where the app comes from and its license. |
 | `maintainers` | `{github}[]` | community | GitHub handles of the people who keep the package current. |
-| `images` | string[] | community | Image repositories the package runs, without tags. |
+| `standard` | object | no | The parts Edka writes. See [Standard parts](#standard-parts). |
+| `values` | string | no | With `standard`: chart values of the app, as a Mustache template. |
+| `images` | string[] | community | Image repositories the package runs, without tags. With `standard`, its image is listed already. |
 | `platforms` | string[] | community | `linux/amd64`, `linux/arm64` |
 | `required_addons` | string[] | no | Add-ons that must be installed first. |
 | `auto_update` | object | no | Image tags Edka may update. See [Image updates](#image-updates). |
-| `configuration_tabs` | string[] | yes | Tabs of the settings form, in order. |
-| `inputs_schema` | map | yes | The fields of each tab. |
+| `configuration_tabs` | string[] | without `standard` | Tabs of the settings form, in order. With `standard`, Edka orders the tabs and the key is rejected. |
+| `inputs_schema` | map | without `standard` | The fields of each tab. With `standard`, the fields of the app only. |
 | `endpoints` | list | no | Addresses shown on the app page. |
 | `exposure_schema` | object | no | Structured endpoint declarations. |
 | `runtime_selectors` | object | no | How Edka finds what the app runs. |
 | `metrics_schema` | object | no | Metrics shown on the app page. |
 | `multi_instance` | boolean | no | `false` allows one instance per cluster. |
-| `template` | string | yes | The manifests, as a Mustache template. |
+| `template` | string | without `standard` | The manifests, as a Mustache template. With `standard`, the objects of the app only, such as a Secret. |
 
 A name or slug that another app in the same catalog already uses is rejected,
 and so are the names of Edka's own apps.
+
+## Standard parts
+
+Most of a package is the same for every app: the Namespace, the `HelmChart`
+that installs `./chart`, the image, resources and placement settings, the
+HTTPRoute and the endpoints. With `standard`, Edka writes these, and the
+package holds only what is particular to the app.
+
+```yaml
+standard:
+  image: "ghcr.io/usememos/memos"
+  tag: "0.31.0@sha256:24c2707ddd8fbd2ceaa7a61ecab86a53cdcde640b24ce572b73da14b00b5785f"
+  port: 5230
+  with: ["storage", "access"]
+  defaults:
+    memory_limit: "1Gi"
+
+values: |
+  {{#access_enabled}}
+  instanceUrl: "https://{{{ hostname }}}"
+  {{/access_enabled}}
+```
+
+| Key | Notes |
+|---|---|
+| `image` | Image repository without a tag. |
+| `tag` | Default of the image tag field. A community package pins the digest after the tag. |
+| `port` | Port of the Service named `{{{ release_name }}}`. The HTTPRoute and the address inside the cluster use it. |
+| `with` | Any of `storage`, `access` and `postgres`. |
+| `defaults` | New defaults for standard fields, by field name. |
+
+What Edka writes:
+
+| Part | Fields | Objects and values |
+|---|---|---|
+| Always | `namespace`, `image_tag` and the auto-update fields in `general`; the `resources` and `placement` tabs | The Namespace, and the `HelmChart` named `{{{ release_name }}}` with the auto-update annotations. Its values set `fullnameOverride`, `image.repository`, `image.tag`, `podLabels`, `podAnnotations` with `checksum/secrets`, `resources`, `nodeSelector` and `tolerations`. An image update target for `image.tag`. An endpoint for `http://{{{ release_name }}}.{{{ namespace }}}.svc.cluster.local:<port>`. Runtime selectors for the Namespace, the workload and the Service named `{{{ release_name }}}` |
+| `storage` | `storage_class` and `storage_size` in the `storage` tab | `persistence.size` and `persistence.storageClass`, and a runtime selector for the claim named `{{{ release_name }}}` |
+| `access` | `access_enabled`, `ingress_class`, `hostname` and `use_cluster_issuer` in the `access` tab | An HTTPRoute from the hostname to the Service on `port`, and an `External URL` endpoint |
+| `postgres` | The PostgreSQL fields in the `database` tab, including `database_url` | |
+
+The chart of a package with `standard` reads those values: every key listed
+above is declared in `values.yaml`, the Service and the claim are named after
+`fullnameOverride`, and the pod template carries `podLabels` and
+`podAnnotations`. `edka apps init` writes a chart that does.
+
+The rest of the package:
+
+- `inputs_schema` holds the fields of the app. A field in a tab that Edka
+  fills, such as `general` or `access`, comes after the standard ones. A tab
+  of the app's own comes after `general`. A field may not take the name of a
+  standard field: set `standard.defaults` to change its default.
+- `template` holds the other objects, such as the Secret the chart reads. It
+  may not hold a Namespace or a `HelmChart`.
+- `values` holds the chart values of the app. It may not set a key that Edka
+  writes.
+- `endpoints`, `images`, `auto_update` targets and `runtime_selectors` are
+  added to the ones Edka writes.
 
 ## The settings form
 
