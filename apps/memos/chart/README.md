@@ -51,7 +51,9 @@ helm install memos . --set instanceUrl=https://notes.example.com
 - **Configuration from the environment.** `MEMOS_DATA` and `MEMOS_PORT` come
   from `persistence.mountPath` and `containerPort`. Memos reads every setting
   of its command line from a `MEMOS_*` variable.
-- **Probes** call `GET /healthz` on the HTTP port.
+- **Probes** call `GET /healthz` on the HTTP port. Memos migrates its database
+  before it listens, so a startup probe gives it up to 10 minutes before the
+  liveness probe can restart the pod.
 
 ## Checks
 

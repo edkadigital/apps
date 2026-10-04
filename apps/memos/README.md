@@ -47,7 +47,8 @@ Whether other people can sign up is a setting of Memos itself.
 ## Updates
 
 The Deployment has one replica and replaces it on every change, so Memos is
-unavailable while the pod restarts. Memos migrates its database when it starts.
+unavailable while the pod restarts. Memos migrates its database when it starts,
+and the pod gets up to 10 minutes for that before Kubernetes restarts it.
 By default, auto-update applies patch releases only.
 
 ## Where the facts come from
