@@ -95,6 +95,9 @@ These checks run on the pull request:
 A maintainer reads the package and merges it. A merged version appears in the
 catalog with a following Edka release.
 
+Every Monday the Chart check also runs on every app, so a tag that was pushed
+again or an image that left its registry shows up without a pull request.
+
 ## Change a package
 
 A listed version never changes. A change to a package on `main` raises

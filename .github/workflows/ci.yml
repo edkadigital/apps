@@ -4,13 +4,19 @@ on:
   pull_request:
   push:
     branches: [main]
+  # Every Monday, and by hand, the chart check runs on every app. A tag that
+  # was pushed again or an image that left its registry shows up without a
+  # pull request.
+  schedule:
+    - cron: '23 6 * * 1'
+  workflow_dispatch:
 
 # A pull request from a fork runs with a read-only token and no secrets.
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ci-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -83,7 +89,10 @@ jobs:
   smoke:
     name: Install (${{ matrix.app }})
     needs: [changes, chart]
-    if: needs.changes.outputs.apps != '[]'
+    # The images are pinned by digest, so a weekly install shows nothing new.
+    if: >-
+      needs.changes.outputs.apps != '[]' &&
+      github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
