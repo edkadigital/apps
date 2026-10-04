@@ -32,7 +32,7 @@ echo "== Kubernetes schemas"
 kubeconform -strict -summary -kubernetes-version 1.32.0 - < "$rendered"
 
 echo "== community rules"
-images="$(yq -o=json -I=0 '.images // []' "$app/template.yaml")"
+images="$(yq -o=json -I=0 '([.standard.image] | map(select(. != null))) + (.images // [])' "$app/template.yaml")"
 findings="$(
   yq -o=json -I=0 ea '[.]' "$rendered" \
     | jq -r --argjson images "$images" --arg namespace "smoke-$slug" -f "$here/rendered.jq"

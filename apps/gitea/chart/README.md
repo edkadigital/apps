@@ -47,12 +47,12 @@ data volume, and the Secret needs no `GITEA__database__PASSWD`.
 | `admin.username` | `gitea_admin` | Administrator account. |
 | `admin.email` | `gitea@local.domain` | |
 | `admin.passwordMode` | `keepUpdated` | `keepUpdated` sets the password to `ADMIN_PASSWORD` on every pod start. `initialOnly` creates the account once. |
-| `service.http.port` | `3000` | Service `<fullname>-http`. |
+| `service.http.port` | `3000` | Service `<fullname>`. |
 | `service.ssh.enabled` | `false` | Adds the Service `<fullname>-ssh` and starts Gitea's SSH server on container port 2222. |
 | `service.ssh.port` | `22` | Port of the SSH Service, and the port Gitea shows in clone addresses. |
-| `persistence.enabled` | `true` | PersistentVolumeClaim `<fullname>-data` at `/var/lib/gitea`. |
+| `persistence.enabled` | `true` | PersistentVolumeClaim `<fullname>` at `/var/lib/gitea`. |
 | `persistence.size` | `10Gi` | |
-| `persistence.storageClassName` | `""` | Empty uses the default of the cluster. |
+| `persistence.storageClass` | `""` | Empty uses the default of the cluster. |
 | `persistence.existingClaim` | `""` | Uses a claim that exists. |
 | `resources` | `{}` | Applied to the init step and to Gitea. |
 | `nodeSelector` | `{}` | |

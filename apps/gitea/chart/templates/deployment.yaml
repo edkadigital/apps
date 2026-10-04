@@ -154,7 +154,7 @@ spec:
         - name: data
           {{- if .Values.persistence.enabled }}
           persistentVolumeClaim:
-            claimName: {{ .Values.persistence.existingClaim | default (printf "%s-data" (include "gitea.fullname" .)) }}
+            claimName: {{ .Values.persistence.existingClaim | default (include "gitea.fullname" .) }}
           {{- else }}
           emptyDir: {}
           {{- end }}

@@ -2,7 +2,7 @@ apiVersion: v2
 name: memos
 description: Memos note-taking on the official image, with its SQLite database on one volume. The chart ships no database or ingress.
 type: application
-version: 0.1.1
+version: 0.2.0
 appVersion: "0.31.0"
 home: https://usememos.com
 sources:

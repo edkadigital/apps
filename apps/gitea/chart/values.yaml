@@ -59,7 +59,7 @@ persistence:
   # and the SQLite database when one is used.
   size: 10Gi
   # An empty value uses the default StorageClass of the cluster.
-  storageClassName: ""
+  storageClass: ""
   # Use a PersistentVolumeClaim that exists instead of creating one.
   existingClaim: ""
 

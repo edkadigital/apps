@@ -47,8 +47,9 @@ person or an AI agent. The format is in
 | `chart/ci/prerequisites.yaml` | Objects the checks apply before the install: the Secret the chart reads, and a throwaway database when the app cannot run without one. |
 | `test/answers.yaml` | Answers to the form fields that have no default, by field name. |
 
-The checks install the image tag the form pins. They read it from the
-`auto_update` target of `template.yaml` and the default of the field it names.
+The checks install the image tag the form pins. They read it from
+`standard.tag` in `template.yaml`, and from each `auto_update` target with the
+default of the field it names.
 
 ## Run the checks
 

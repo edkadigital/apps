@@ -52,8 +52,8 @@ the package runs:
 
 Build for the platform of the nodes, `linux/amd64` on most clusters. Check
 that the image starts and answers on its port before packaging it. Read the
-digest back from the registry after the push, and set the default of the image
-tag field to `<tag>@sha256:<digest>`.
+digest back from the registry after the push, and set `standard.tag` to
+`<tag>@sha256:<digest>`.
 
 ## 2. Start from the scaffold
 
@@ -64,6 +64,11 @@ edka apps init <slug> --name "<Name>" --image <repository> --tag <tag> --port <p
 `--with` takes `access` (a hostname on the gateway), `storage` (a data volume,
 with `--data-path`), and `postgres` (a PostgreSQL database). The result passes
 validation as written. Change it, do not rewrite it.
+
+`template.yaml` starts with a `standard` block. Edka writes the Namespace, the
+`HelmChart`, the HTTPRoute, the image, resources, placement, storage, access
+and PostgreSQL fields, and the standard chart values from it. Leave those out
+of the package.
 
 ## 3. Write the package
 
@@ -82,9 +87,13 @@ In `chart/`:
 
 In `template.yaml`:
 
-- Add a field for each setting an installer needs. Give every field a `label`,
-  a `description` and a `default` when one makes sense.
-- Pass settings to the chart under `valuesContent`.
+- Add a field for each setting an installer needs under `inputs_schema`. Give
+  every field a `label`, a `description` and a `default` when one makes sense.
+- Pass settings to the chart under `values`. Edka writes `image`, `resources`,
+  `nodeSelector`, `tolerations`, `podLabels`, `podAnnotations` and, with
+  storage, `persistence`.
+- Change the default of a standard field, such as `memory_limit`, under
+  `standard.defaults`.
 - Put each secret in the Secret named `{{{ release_name }}}-config`, one key
   per secret field. Use `generate: true` for a secret the app only needs to be
   random. A secret field never has a `default`.
@@ -100,9 +109,8 @@ Rules that are easy to miss:
 - Use `{{{ three braces }}}`.
 - The chart `name` is the slug and its `version` is the package version.
 - Every workload carries `app.kubernetes.io/instance: {{ .Release.Name }}`.
-- The `HelmChart` is named `{{{ release_name }}}` and has `chart: ./chart`.
-- The template passes `checksum/secrets: "{{{ secrets_checksum }}}"` under
-  `podAnnotations`. Without it a changed secret does not restart the pods.
+- The Service the gateway reaches is named after `fullnameOverride`, on the
+  port in `standard.port`.
 
 ## 4. Validate until clean
 
@@ -170,8 +178,8 @@ default changed: ask the user before going on. Then run the command again with
 `--yes`.
 
 A setting the installed app never changed takes the default of the new
-version. A new default for the image tag field is how a new release of the app
-reaches an installed app.
+version. A new `standard.tag` is how a new release of the app reaches an
+installed app.
 
 ## 6. Report
 
@@ -195,9 +203,9 @@ Tell the user:
 2. Read the release notes between the two versions. Stop and tell the user when
    the release needs something the package does not provide, such as a new
    required setting, a new service or a manual migration.
-3. Set the default of the image tag field to `<tag>@sha256:<digest>`, and
-   `app_version` in `template.yaml` and `appVersion` in `chart/Chart.yaml` to the
-   new version of the app.
+3. Set `standard.tag` to `<tag>@sha256:<digest>`, and `app_version` in
+   `template.yaml` and `appVersion` in `chart/Chart.yaml` to the new version of
+   the app.
 4. Raise `version` in `template.yaml` and in `chart/Chart.yaml`.
 5. Validate, publish and update an installed app, as in steps 4 and 5.
 

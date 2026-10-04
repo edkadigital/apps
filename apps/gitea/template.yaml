@@ -2,7 +2,7 @@ format_version: 2
 name: "Gitea"
 slug: "gitea"
 description: "Self-hosted Git service with issues, pull requests and CI, on a PostgreSQL database of the cluster."
-version: "0.2.1"
+version: "0.3.0"
 app_version: "1.26.4"
 category: "developer-tools"
 subcategory: "git"
@@ -18,38 +18,22 @@ upstream:
   license: "MIT"
 maintainers:
   - github: "camilb"
-images:
-  - "docker.gitea.com/gitea"
 platforms: ["linux/amd64", "linux/arm64"]
-required_addons: []
 
-auto_update:
-  targets:
-    - type: "image-tag"
-      field: "image_tag"
-      repository: "docker.gitea.com/gitea"
-      helm_value_path: "image.tag"
-
-configuration_tabs:
-  - "general"
-  - "database"
-  - "storage"
-  - "resources"
-  - "placement"
-  - "access"
+standard:
+  image: "docker.gitea.com/gitea"
+  tag: "1.26.4-rootless@sha256:cd1d2614b403fc9b085fa52ceb4424dde9c4dcf5da8e3263abb27955562070c4"
+  port: 3000
+  with: ["postgres", "storage", "access"]
+  defaults:
+    auto_update_policy: "patch"
+    auto_update_frequency: "6h"
+    cpu_request: "250m"
+    memory_request: "512Mi"
+    cpu_limit: "1"
+    memory_limit: "1Gi"
 
 endpoints:
-  - name: "Gitea"
-    type: "service"
-    icon: "git-branch"
-    value_template: "http://{{{ release_name }}}-http.{{{ namespace }}}.svc.cluster.local:3000"
-    description: "Web and API address inside the cluster"
-  - name: "External URL"
-    type: "url"
-    icon: "globe"
-    value_template: "https://{{{ hostname }}}"
-    description: "Address on the gateway"
-    show_if: "access_enabled"
   - name: "SSH"
     type: "service"
     icon: "terminal"
@@ -62,91 +46,8 @@ endpoints:
     value_template: "{{{ admin_username }}}"
     description: "Administrator account created at install"
 
-runtime_selectors:
-  labels:
-    edka.io/app-id: "{{{ app_id }}}"
-  namespaces:
-    - "{{{ namespace }}}"
-  workloads:
-    - "{{{ release_name }}}"
-  services:
-    - "{{{ release_name }}}-http"
-  persistent_volume_claims:
-    - "{{{ release_name }}}-data"
-
 inputs_schema:
   general:
-    - name: "namespace"
-      config:
-        type: "dynamic-select"
-        label: "Namespace"
-        description: "Namespace Gitea is installed into"
-        default: "gitea"
-        data_source: "cluster-namespaces"
-        required: true
-        editable: false
-        validation: "kubernetes-name"
-    - name: "image_tag"
-      config:
-        type: "string"
-        label: "Image tag"
-        description: "Tag of the rootless Gitea image"
-        default: "1.26.4-rootless@sha256:cd1d2614b403fc9b085fa52ceb4424dde9c4dcf5da8e3263abb27955562070c4"
-        required: true
-        editable: true
-    - name: "auto_update_enabled"
-      config:
-        type: "boolean"
-        label: "Auto-update"
-        description: "Apply newer image tags that match the policy."
-        default: false
-        required: false
-        editable: true
-    - name: "auto_update_policy"
-      config:
-        type: "select"
-        label: "Auto-update policy"
-        description: "Version range allowed for automatic image updates."
-        default: "patch"
-        required: true
-        editable: true
-        show_if: "auto_update_enabled"
-        options:
-          - label: "Patch"
-            value: "patch"
-          - label: "Minor"
-            value: "minor"
-          - label: "Major"
-            value: "major"
-          - label: "All"
-            value: "all"
-          - label: "Custom"
-            value: "custom"
-    - name: "auto_update_custom_pattern"
-      config:
-        type: "string"
-        label: "Custom tag pattern"
-        description: "Custom tag filter. Use glob: or regexp: prefixes."
-        default: ""
-        required: false
-        editable: true
-        show_if: "auto_update_enabled && auto_update_policy === 'custom'"
-    - name: "auto_update_frequency"
-      config:
-        type: "select"
-        label: "Auto-update check"
-        description: "Minimum time between update checks for this app."
-        default: "6h"
-        required: true
-        editable: true
-        show_if: "auto_update_enabled"
-        options:
-          - label: "Every hour"
-            value: "1h"
-          - label: "Every 6 hours"
-            value: "6h"
-          - label: "Daily"
-            value: "24h"
     - name: "site_title"
       config:
         type: "string"
@@ -228,207 +129,7 @@ inputs_schema:
         required: false
         editable: true
 
-  database:
-    - name: "postgres_instance"
-      config:
-        type: "dynamic-select"
-        label: "PostgreSQL installation"
-        description: "PostgreSQL installation Gitea uses"
-        data_source: "cluster-postgresql-instances"
-        required: true
-        editable: true
-        placeholder: "Select a PostgreSQL installation"
-        set_fields:
-          postgres_host: "metadata.host"
-          postgres_port: "metadata.port"
-          postgres_ssl_enabled: "metadata.sslEnabled"
-    - name: "postgres_database"
-      config:
-        type: "dynamic-select"
-        label: "PostgreSQL database"
-        description: "Database Gitea uses"
-        data_source: "cluster-postgresql-databases"
-        depends_on: "postgres_instance"
-        required: true
-        editable: true
-        placeholder: "Select a PostgreSQL database"
-        set_fields:
-          postgres_database: "metadata.database"
-    - name: "postgres_user"
-      config:
-        type: "dynamic-select"
-        label: "PostgreSQL user"
-        description: "Login user Gitea connects as"
-        data_source: "cluster-postgresql-users"
-        depends_on: "postgres_instance"
-        required: true
-        editable: true
-        placeholder: "Select a PostgreSQL user"
-        set_fields:
-          postgres_user: "metadata.username"
-          postgres_password_secret_namespace: "metadata.passwordSecretNamespace"
-          postgres_password_secret_name: "metadata.passwordSecretName"
-          postgres_password_secret_key: "metadata.passwordSecretKey"
-    - name: "postgres_host"
-      config:
-        type: "hidden"
-        label: "PostgreSQL host"
-        default: ""
-        required: false
-        editable: true
-    - name: "postgres_port"
-      config:
-        type: "hidden"
-        label: "PostgreSQL port"
-        default: 5432
-        required: false
-        editable: true
-    - name: "postgres_password_secret_name"
-      config:
-        type: "hidden"
-        label: "PostgreSQL password Secret"
-        default: ""
-        required: false
-        editable: true
-    - name: "postgres_password_secret_namespace"
-      config:
-        type: "hidden"
-        label: "PostgreSQL password Secret namespace"
-        default: ""
-        required: false
-        editable: true
-    - name: "postgres_password_secret_key"
-      config:
-        type: "hidden"
-        label: "PostgreSQL password Secret key"
-        default: "password"
-        required: false
-        editable: true
-    - name: "postgres_password"
-      config:
-        type: "hidden"
-        label: "PostgreSQL password"
-        description: "Read by Edka from the Secret of the selected user"
-        default: ""
-        required: false
-        editable: true
-        secret: true
-    - name: "postgres_ssl_enabled"
-      config:
-        type: "hidden"
-        label: "PostgreSQL SSL"
-        default: false
-        required: false
-        editable: true
-
-  storage:
-    - name: "storage_class"
-      config:
-        type: "dynamic-select"
-        label: "Storage class"
-        description: "Storage class of the data volume. Empty uses the default of the cluster."
-        data_source: "cluster-storage-classes"
-        required: false
-        editable: false
-    - name: "storage_size"
-      config:
-        type: "string"
-        label: "Storage size"
-        description: "Size of the volume that holds repositories, LFS objects and attachments"
-        default: "10Gi"
-        required: true
-        editable: true
-
-  resources:
-    - name: "cpu_request"
-      config:
-        type: "string"
-        label: "CPU request"
-        description: "CPU reserved for the Gitea pod"
-        default: "250m"
-        required: true
-    - name: "memory_request"
-      config:
-        type: "string"
-        label: "Memory request"
-        description: "Memory reserved for the Gitea pod"
-        default: "512Mi"
-        required: true
-    - name: "cpu_limit"
-      config:
-        type: "string"
-        label: "CPU limit"
-        description: "Most CPU the Gitea pod can use"
-        default: "1"
-        required: true
-    - name: "memory_limit"
-      config:
-        type: "string"
-        label: "Memory limit"
-        description: "Most memory the Gitea pod can use"
-        default: "1Gi"
-        required: true
-
-  placement:
-    - name: "node_pool_name"
-      config:
-        type: "dynamic-select"
-        label: "Node pool"
-        description: "Run the Gitea pod on one node pool"
-        data_source: "cluster-node-pools"
-        required: false
-        editable: true
-    - name: "tolerate_node_pool_taints"
-      config:
-        type: "boolean"
-        label: "Tolerate node pool taints"
-        description: "Add tolerations for the taints of the selected node pool"
-        default: true
-        required: false
-
-  access:
-    - name: "access_enabled"
-      config:
-        type: "boolean"
-        label: "Expose through the gateway"
-        description: "Publish Gitea on a hostname through a Gateway traffic class."
-        default: false
-        required: false
-    - name: "ingress_class"
-      config:
-        type: "dynamic-select"
-        label: "Traffic class"
-        description: "Gateway traffic class of this cluster"
-        default: ""
-        data_source: "cluster-ingress-classes"
-        required: true
-        show_if: "access_enabled"
-    - name: "hostname"
-      config:
-        type: "string"
-        label: "Hostname"
-        description: "Hostname Gitea is reached on"
-        default: ""
-        required: true
-        editable: true
-        validation: "domain"
-        show_if: "access_enabled"
-        placeholder: "git.example.com"
-    - name: "use_cluster_issuer"
-      config:
-        type: "boolean"
-        label: "Request a certificate"
-        description: "Request a Let's Encrypt certificate for the hostname when no wildcard certificate of the cluster covers it."
-        default: true
-        required: false
-        show_if: "access_enabled"
-
 template: |
-  apiVersion: v1
-  kind: Namespace
-  metadata:
-    name: {{{ namespace }}}
-  ---
   apiVersion: v1
   kind: Secret
   metadata:
@@ -441,111 +142,36 @@ template: |
     GITEA__security__INTERNAL_TOKEN: "{{{ internal_token }}}"
     GITEA__database__PASSWD: |-
       {{{ postgres_password }}}
-  ---
-  apiVersion: helm.cattle.io/v1
-  kind: HelmChart
-  metadata:
-    namespace: {{{ namespace }}}
-    name: {{{ release_name }}}
-    annotations:
-      edka.io/auto-update-enabled: "{{{ auto_update_enabled }}}"
-      edka.io/auto-update-policy: "{{{ auto_update_policy }}}"
-      edka.io/auto-update-frequency: "{{{ auto_update_frequency }}}"
-      edka.io/auto-update-custom-pattern: "{{{ auto_update_custom_pattern }}}"
-      edka.io/auto-update-targets: |-
-        {{{ auto_update_targets }}}
-  spec:
-    chart: ./chart
-    targetNamespace: {{{ namespace }}}
-    valuesContent: |-
-      fullnameOverride: "{{{ release_name }}}"
-      image:
-        tag: "{{{ image_tag }}}"
-      existingSecret: "{{{ release_name }}}-config"
-      podLabels:
-        edka.io/app-id: "{{{ app_instance_id_label }}}"
-        edka.io/catalog-app-id: "{{{ catalog_app_id_label }}}"
-      podAnnotations:
-        checksum/secrets: "{{{ secrets_checksum }}}"
-      admin:
-        username: "{{{ admin_username }}}"
-        email: "{{{ admin_email }}}"
-        passwordMode: "initialOnly"
-      config:
-        APP_NAME: |-
-          {{{ site_title }}}
-        GITEA__database__DB_TYPE: "postgres"
-        GITEA__database__HOST: "{{{ postgres_host }}}:{{{ postgres_port }}}"
-        GITEA__database__NAME: "{{{ postgres_database }}}"
-        GITEA__database__USER: "{{{ postgres_user }}}"
-        {{#postgres_ssl_enabled}}
-        GITEA__database__SSL_MODE: "require"
-        {{/postgres_ssl_enabled}}
-        {{^postgres_ssl_enabled}}
-        GITEA__database__SSL_MODE: "disable"
-        {{/postgres_ssl_enabled}}
-        {{#access_enabled}}
-        GITEA__server__ROOT_URL: "https://{{{ hostname }}}/"
-        GITEA__server__DOMAIN: "{{{ hostname }}}"
-        GITEA__server__SSH_DOMAIN: "{{{ hostname }}}"
-        {{/access_enabled}}
-        {{^access_enabled}}
-        GITEA__server__ROOT_URL: "http://{{{ release_name }}}-http.{{{ namespace }}}.svc.cluster.local:3000/"
-        {{/access_enabled}}
-        GITEA__service__DISABLE_REGISTRATION: "{{{ disable_registration }}}"
-        GITEA__service__REQUIRE_SIGNIN_VIEW: "{{{ require_signin_view }}}"
-      service:
-        ssh:
-          enabled: {{{ ssh_enabled }}}
-      persistence:
-        size: "{{{ storage_size }}}"
-        {{#storage_class}}
-        storageClassName: "{{{ storage_class }}}"
-        {{/storage_class}}
-      resources:
-        requests:
-          cpu: "{{{ cpu_request }}}"
-          memory: "{{{ memory_request }}}"
-        limits:
-          cpu: "{{{ cpu_limit }}}"
-          memory: "{{{ memory_limit }}}"
-      {{#node_pool_selector_enabled}}
-      nodeSelector:
-        {{{ node_pool_selector_key }}}: "{{{ node_pool_selector_value }}}"
-      {{/node_pool_selector_enabled}}
-      {{#node_pool_tolerations_enabled}}
-      tolerations:
-      {{#node_pool_tolerations}}
-        - key: "{{{ key }}}"
-          operator: Equal
-          value: "{{{ value }}}"
-          effect: "{{{ effect }}}"
-      {{/node_pool_tolerations}}
-      {{/node_pool_tolerations_enabled}}
-      {{^node_pool_tolerations_enabled}}
-      tolerations: []
-      {{/node_pool_tolerations_enabled}}
-  {{#access_enabled}}
-  {{#ingress_class_is_gateway}}
-  ---
-  apiVersion: gateway.networking.k8s.io/v1
-  kind: HTTPRoute
-  metadata:
-    namespace: {{{ namespace }}}
-    name: {{{ release_name }}}-web
-  spec:
-    parentRefs:
-      - name: {{{ gateway_name }}}
-        namespace: {{{ gateway_namespace }}}
-    hostnames:
-      - "{{{ hostname }}}"
-    rules:
-      - matches:
-          - path:
-              type: PathPrefix
-              value: /
-        backendRefs:
-          - name: {{{ release_name }}}-http
-            port: 3000
-  {{/ingress_class_is_gateway}}
-  {{/access_enabled}}
+
+values: |
+  existingSecret: "{{{ release_name }}}-config"
+  admin:
+    username: "{{{ admin_username }}}"
+    email: "{{{ admin_email }}}"
+    passwordMode: "initialOnly"
+  config:
+    APP_NAME: |-
+      {{{ site_title }}}
+    GITEA__database__DB_TYPE: "postgres"
+    GITEA__database__HOST: "{{{ postgres_host }}}:{{{ postgres_port }}}"
+    GITEA__database__NAME: "{{{ postgres_database }}}"
+    GITEA__database__USER: "{{{ postgres_user }}}"
+    {{#postgres_ssl_enabled}}
+    GITEA__database__SSL_MODE: "require"
+    {{/postgres_ssl_enabled}}
+    {{^postgres_ssl_enabled}}
+    GITEA__database__SSL_MODE: "disable"
+    {{/postgres_ssl_enabled}}
+    {{#access_enabled}}
+    GITEA__server__ROOT_URL: "https://{{{ hostname }}}/"
+    GITEA__server__DOMAIN: "{{{ hostname }}}"
+    GITEA__server__SSH_DOMAIN: "{{{ hostname }}}"
+    {{/access_enabled}}
+    {{^access_enabled}}
+    GITEA__server__ROOT_URL: "http://{{{ release_name }}}.{{{ namespace }}}.svc.cluster.local:3000/"
+    {{/access_enabled}}
+    GITEA__service__DISABLE_REGISTRATION: "{{{ disable_registration }}}"
+    GITEA__service__REQUIRE_SIGNIN_VIEW: "{{{ require_signin_view }}}"
+  service:
+    ssh:
+      enabled: {{{ ssh_enabled }}}
