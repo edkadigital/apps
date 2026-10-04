@@ -1,0 +1,13 @@
+apiVersion: v2
+name: memos
+description: Memos note-taking on the official image, with its SQLite database on one volume. The chart ships no database or ingress.
+type: application
+version: 0.1.0
+appVersion: "0.31.0"
+home: https://usememos.com
+sources:
+  - https://github.com/usememos/memos
+  - https://github.com/edkadigital/apps
+maintainers:
+  - name: Edka
+    url: https://edka.io

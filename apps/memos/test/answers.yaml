@@ -1,0 +1,3 @@
+access_enabled: true
+ingress_class: "eg"
+hostname: "memos.example.com"
