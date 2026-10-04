@@ -2,7 +2,7 @@ format_version: 2
 name: "Gitea"
 slug: "gitea"
 description: "Self-hosted Git service with issues, pull requests and CI, on a PostgreSQL database of the cluster."
-version: "0.2.0"
+version: "0.2.1"
 app_version: "1.26.4"
 category: "developer-tools"
 subcategory: "git"
@@ -472,7 +472,8 @@ template: |
         email: "{{{ admin_email }}}"
         passwordMode: "initialOnly"
       config:
-        APP_NAME: "{{{ site_title }}}"
+        APP_NAME: |-
+          {{{ site_title }}}
         GITEA__database__DB_TYPE: "postgres"
         GITEA__database__HOST: "{{{ postgres_host }}}:{{{ postgres_port }}}"
         GITEA__database__NAME: "{{{ postgres_database }}}"

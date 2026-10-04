@@ -44,7 +44,7 @@ spec:
             - |
               set -eu
               gitea migrate
-              if gitea admin user list --admin | grep -E "\s+${GITEA_ADMIN_USERNAME}\s+" >/dev/null; then
+              if gitea admin user list --admin | grep -E "[[:space:]]+${GITEA_ADMIN_USERNAME}[[:space:]]+" >/dev/null; then
                 echo "admin user ${GITEA_ADMIN_USERNAME} exists"
                 {{- if eq .Values.admin.passwordMode "keepUpdated" }}
                 gitea admin user change-password --username "${GITEA_ADMIN_USERNAME}" --password "${GITEA_ADMIN_PASSWORD}" --must-change-password=false
