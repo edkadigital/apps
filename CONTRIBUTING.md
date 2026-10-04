@@ -101,7 +101,7 @@ again or an image that left its registry shows up without a pull request.
 ## Change a package
 
 A listed version never changes. A change to a package on `main` raises
-`version` in `template.yaml` and in `chart/Chart.yaml`. The skill has the steps
+`version` in `template.yaml`. The skill has the steps
 for
 [moving a package to a new release of the app](skills/edka-app/SKILL.md#moving-a-package-to-a-new-release-of-the-app).
 

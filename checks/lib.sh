@@ -43,6 +43,18 @@ pinned_tags() {
   ' "$1/template.yaml"
 }
 
+# A copy of the chart of one app, named and versioned the way Edka packs it:
+# with the slug and the version in template.yaml. Prints the directory of the
+# copy. The caller removes it.
+packed_chart() {
+  local app="$1" copy
+  copy="$(mktemp -d)"
+  cp -R "$app/chart/." "$copy/"
+  NAME="$(yq -r '.slug' "$app/template.yaml")" VERSION="$(yq -r '.version' "$app/template.yaml")" \
+    yq -i '.name = strenv(NAME) | .version = strenv(VERSION)' "$copy/Chart.yaml"
+  echo "$copy"
+}
+
 # Fills HELM_VALUES with the arguments every check passes to Helm.
 helm_values() {
   local app="$1" pin

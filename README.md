@@ -81,9 +81,9 @@ In short, a community package:
 ## Versions
 
 A listed version never changes. A change to a package is a new version, with a
-higher `version` in `template.yaml` and `chart/Chart.yaml`. An installed app
-stays on the version it was installed with until someone updates it, and Edka
-shows what the new version runs and creates before the update.
+higher `version` in `template.yaml`. An installed app stays on the version it
+was installed with until someone updates it, and Edka shows what the new
+version runs and creates before the update.
 
 ## Withdrawn packages
 

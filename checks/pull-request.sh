@@ -49,7 +49,7 @@ previous="$(git show "$base:$app/template.yaml" | yq -r '.version // ""')"
 # sort -V orders versions. A version that sorts last and differs is higher.
 highest="$(printf '%s\n%s\n' "$previous" "$version" | sort -V | tail -n 1)"
 if [ "$version" = "$previous" ] || [ "$highest" != "$version" ]; then
-  die "$slug changes and its version is $version, while main has $previous. A listed version never changes: raise version in template.yaml and chart/Chart.yaml"
+  die "$slug changes and its version is $version, while main has $previous. A listed version never changes: raise version in template.yaml"
 fi
 echo "version $previous -> $version"
 echo "ok"

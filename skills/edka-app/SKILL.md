@@ -164,7 +164,7 @@ edka apps logs <slug>
 ```
 
 A change to a published package is a new version. Raise `version` in
-`template.yaml` and in `chart/Chart.yaml`, publish, then move the installed app:
+`template.yaml`, publish, then move the installed app:
 
 ```bash
 edka apps update <slug> --wait
@@ -206,7 +206,7 @@ Tell the user:
 3. Set `standard.tag` to `<tag>@sha256:<digest>`, and `app_version` in
    `template.yaml` and `appVersion` in `chart/Chart.yaml` to the new version of
    the app.
-4. Raise `version` in `template.yaml` and in `chart/Chart.yaml`.
+4. Raise `version` in `template.yaml`.
 5. Validate, publish and update an installed app, as in steps 4 and 5.
 
 ## Sharing with the community

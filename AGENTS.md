@@ -23,8 +23,7 @@ package: a `template.yaml`, a Helm chart, a `README.md` and test answers.
   docker buildx imagetools inspect <repository>:<tag>
   ```
 
-- A change to a package that is on `main` raises `version` in `template.yaml`
-  and in `chart/Chart.yaml`.
+- A change to a package that is on `main` raises `version` in `template.yaml`.
 - A new package lists the GitHub handle of the person who opens the pull
   request under `maintainers`. `edka apps share` opens the pull request.
 - No credentials in any file. The values the checks need go into

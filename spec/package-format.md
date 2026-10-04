@@ -271,10 +271,11 @@ spec:
 
 Rules for the chart:
 
-- `Chart.yaml` has `apiVersion: v2`, `type: application`, `name` equal to the
-  slug and `version` equal to the package version.
+- `Chart.yaml` has `apiVersion: v2` and `type: application`. Edka packs the
+  chart with the slug as its `name` and the package version as its `version`,
+  so a new version is raised in `template.yaml` alone.
 - `values.yaml` exists and declares every key that `valuesContent` passes. A
-  key the chart does not declare is rejected, which catches typos.
+  key the chart does not declare is reported, which catches typos.
 - The `HelmChart` is named `{{{ release_name }}}`, and leaves out `spec.repo`,
   `spec.version` and `spec.chartContent`. Edka sets the source of the chart.
 - Every Deployment, StatefulSet and DaemonSet carries the label
@@ -328,7 +329,7 @@ A secret field is a `password` field, or any field with `secret: true`.
   a secret only Edka holds, so the secrets cannot be worked out from it. A
   package with secret fields that leaves it out gets the warning
   `chart.secrets-checksum`.
-- A credential written into the template as plain text is rejected.
+- A credential written into the template as plain text is reported.
 
 The fields Edka fills from a database the installer selects, such as
 `postgres_password` and `database_url`, are exempt from the one-key rule. Edka
@@ -381,7 +382,7 @@ runtime_selectors:
 ## Versions and updates
 
 - A published version never changes. A change to a package is a new version,
-  with a higher number in `template.yaml` and `chart/Chart.yaml`.
+  with a higher number in `template.yaml`.
 - An installed app stays on the version it was installed with. Publishing a
   version changes no installed app.
 - An update moves one app to another version. A setting that still holds the
@@ -417,7 +418,9 @@ edka apps validate ./memos
 Each finding has a code, a file, a line and a fix. The prefix of the code says
 what the finding is about: `package`, `manifest`, `field`, `template`, `secret`,
 `chart`, `endpoint`, `answers`, `auto-update`, and `community` for the listing
-rules. An error blocks publishing. A warning does not.
+rules. An error blocks publishing. A warning does not. Some rules are warnings
+for an organization's own package and errors for a community one: see
+[Community listing](#community-listing).
 
 The validator also reports what the package runs and creates: images, kinds of
 objects, endpoints, storage, databases, secrets and add-ons. Edka shows that
@@ -430,6 +433,13 @@ edka apps validate ./memos --community
 ```
 
 A community package meets every rule above, and these:
+
+- **Rules that warn an organization.** For an organization's own package these
+  are warnings. For a community package they are errors: a link that is not
+  `https`, a chart without `values.yaml` or with a value it does not declare, a
+  secret field written outside a Secret, a credential written into the template,
+  and a file that is not part of a package. An organization's package is
+  published without such a file.
 
 - **Listing.** `upstream`, `maintainers`, `images`, `platforms`, a `README.md`
   and a `test/answers.yaml`.
