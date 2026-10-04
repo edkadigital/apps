@@ -2,7 +2,7 @@ format_version: 2
 name: "Memos"
 slug: "memos"
 description: "Self-hosted note-taking with Markdown notes, tags and a timeline. Data stays in SQLite on one volume."
-version: "0.1.0"
+version: "0.1.1"
 app_version: "0.31.0"
 category: "productivity"
 subcategory: "notes"
