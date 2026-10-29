@@ -15,8 +15,18 @@ Read `spec/package-format.md` and `spec/platform-fields.md` in
 
 ## Before starting
 
-The Edka CLI is signed in: `edka whoami` prints an organization. If it does
-not, ask the user to run `edka login`. Never ask for a password or a token.
+The Edka CLI is installed and signed in: `edka whoami` prints an organization.
+If the shell finds no `edka`, install it:
+
+```bash
+curl -fsSL https://edka.io/install.sh | sh
+```
+
+With Homebrew, `brew install edkadigital/tap/edka`. On Windows,
+`irm https://edka.io/install.ps1 | iex` in PowerShell.
+
+If `edka whoami` prints no organization, ask the user to run `edka login`.
+Never ask for a password or a token.
 
 ## 1. Read the app
 
